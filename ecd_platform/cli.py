@@ -8,7 +8,7 @@
 
 import argparse
 import sys
-from .config import ECDConfig, WeightingStrategy, ImagFreqPolicy, CDGauge
+from .config import ECDConfig, WeightingStrategy, ImagFreqPolicy, CDGauge, QMProgram
 from .pipeline import ECDPipeline
 
 
@@ -24,6 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--ecd-dir", type=str, default="ecd_conf", help="ECD output directory")
     p.add_argument("--exp-file", type=str, default=None, help="Experimental ECD data file")
     p.add_argument("--weights-file", type=str, default=None, help="Manual weights file (CSV)")
+    p.add_argument("--program", choices=[p.value for p in QMProgram],
+                   default="auto",
+                   help="QM program for input files (auto-detected by default)")
 
     # 光谱参数
     p.add_argument("--sigma", type=float, default=0.3, help="Gaussian broadening σ (eV)")
@@ -93,6 +96,7 @@ def main(argv=None):
             ecd_dir=args.ecd_dir,
             exp_file=args.exp_file,
             weights_file=args.weights_file,
+            program=QMProgram(args.program),
             sigma=args.sigma,
             shift=args.shift,
             scale_factor=args.scale,

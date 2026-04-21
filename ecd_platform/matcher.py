@@ -23,9 +23,9 @@ def _extract_conf_id(filename: str, pattern: str) -> Optional[int]:
     return None
 
 
-def _glob_orca_outputs(directory: str) -> List[str]:
-    """扫描目录中所有可能的 ORCA 输出文件"""
-    exts = {'.out', '.log', '.orca'}
+def _glob_qm_outputs(directory: str) -> List[str]:
+    """扫描目录中所有可能的量化输出文件 (ORCA / Gaussian)"""
+    exts = {'.out', '.log', '.orca', '.gjf.log'}
     files = []
     if not os.path.isdir(directory):
         return files
@@ -33,6 +33,10 @@ def _glob_orca_outputs(directory: str) -> List[str]:
         if os.path.splitext(f)[1].lower() in exts:
             files.append(os.path.join(directory, f))
     return files
+
+
+# 保留旧名作为向后兼容别名
+_glob_orca_outputs = _glob_qm_outputs
 
 
 def _compute_file_hash(filepath: str, head_bytes: int = 8192) -> str:
@@ -83,8 +87,8 @@ class ConformerMatcher:
         """
         collection = ConformerCollection()
 
-        opt_files = _glob_orca_outputs(self.config.opt_dir)
-        ecd_files = _glob_orca_outputs(self.config.ecd_dir)
+        opt_files = _glob_qm_outputs(self.config.opt_dir)
+        ecd_files = _glob_qm_outputs(self.config.ecd_dir)
 
         # Step 1: 基于文件名提取 conf_id
         opt_map: Dict[int, str] = {}

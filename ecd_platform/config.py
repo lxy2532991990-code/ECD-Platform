@@ -32,6 +32,13 @@ class CDGauge(Enum):
     VELOCITY = "velocity"     # transition velocity dipole (velocity gauge)
 
 
+class QMProgram(Enum):
+    """量化输出文件来源程序"""
+    AUTO = "auto"             # 依据文件头自动识别 (默认)
+    ORCA = "orca"
+    GAUSSIAN = "gaussian"
+
+
 # ── 主配置 ─────────────────────────────────────────────────────────
 
 @dataclass
@@ -46,6 +53,9 @@ class ECDConfig:
     ecd_dir: str = "ecd_conf"
     exp_file: Optional[str] = None
     weights_file: Optional[str] = None  # 若为 None 则自动查找
+
+    # ── 量化程序 ──
+    program: QMProgram = QMProgram.AUTO    # 计算输出文件来源程序
 
     # ── 构象匹配 ──
     filename_pattern: str = r"(?:conf|conformer|M)[-_]?(\d+)"
@@ -118,6 +128,7 @@ class ECDConfig:
             'imag_freq_policy': ImagFreqPolicy,
             'weighting': WeightingStrategy,
             'cd_gauge': CDGauge,
+            'program': QMProgram,
         }
         for k, enum_cls in enum_map.items():
             if k in d and isinstance(d[k], str):

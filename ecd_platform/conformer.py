@@ -82,10 +82,12 @@ class ConformerRecord:
         return self.boltzmann_weight
 
     def add_warning(self, msg: str):
-        self.warnings.append(msg)
+        if msg not in self.warnings:
+            self.warnings.append(msg)
 
     def add_error(self, msg: str):
-        self.errors.append(msg)
+        if msg not in self.errors:
+            self.errors.append(msg)
 
     def summary(self) -> str:
         parts = [f"Conf-{self.conf_id:>3d}  status={self.status.value:<18s}"]

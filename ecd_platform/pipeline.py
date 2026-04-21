@@ -22,7 +22,12 @@ from typing import Optional
 from .config import ECDConfig, WeightingStrategy
 from .conformer import ConformerCollection
 from .matcher import ConformerMatcher
-from .parser import parse_opt_file, parse_ecd_file, parse_single_file
+from .parser_dispatch import (
+    parse_opt_file,
+    parse_ecd_file,
+    parse_single_file,
+    same_output_file,
+)
 from .energy import compute_boltzmann_weights, load_manual_weights
 from .spectrum import (
     generate_wavelength_grid,
@@ -118,24 +123,28 @@ class ECDPipeline:
     # ── Step 2: 文件解析 ──
 
     def step2_parse(self):
-        self.log("\n── Step 2: Parsing ORCA Outputs (per-conformer) ──")
+        prog_label = self.config.program.value
+        self.log(f"\n── Step 2: Parsing QM Outputs [{prog_label}] (per-conformer) ──")
 
         for rec in self.collection.all_records:
-            # 解析 OPT 文件
+            # 两个路径指向同一个文件：只解析一次，避免重复报错
+            if same_output_file(rec.opt_file, rec.ecd_file):
+                if os.path.exists(rec.opt_file):
+                    parse_single_file(rec.opt_file, rec, self.config)
+                else:
+                    rec.add_warning(f"File not found: {rec.opt_file}")
+                continue
+
+            # 分别解析 OPT 与 ECD
             if rec.opt_file and os.path.exists(rec.opt_file):
                 parse_opt_file(rec.opt_file, rec, self.config)
             elif rec.opt_file:
                 rec.add_warning(f"OPT file not found: {rec.opt_file}")
 
-            # 解析 ECD 文件
             if rec.ecd_file and os.path.exists(rec.ecd_file):
                 parse_ecd_file(rec.ecd_file, rec, self.config)
             elif rec.ecd_file:
                 rec.add_warning(f"ECD file not found: {rec.ecd_file}")
-
-            # 如果两个文件指向同一个路径，用 single_file 模式
-            if rec.opt_file and rec.ecd_file and rec.opt_file == rec.ecd_file:
-                parse_single_file(rec.opt_file, rec, self.config)
 
         n_ok = len(self.collection.usable_records)
         n_fail = len(self.collection.failed_records)

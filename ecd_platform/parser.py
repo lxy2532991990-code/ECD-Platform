@@ -89,7 +89,7 @@ def extract_energies(content: str, record: ConformerRecord):
 
     if record.scf_energy is None:
         record.status = ConformerStatus.NO_ENERGY
-        record.add_error("Failed to extract SCF energy")
+        record.add_error("[ORCA] Failed to extract SCF energy")
 
 
 
@@ -115,7 +115,9 @@ def extract_frequencies(content: str, record: ConformerRecord, config: ECDConfig
                 freq_vals.append(float(m.group(1)))
 
     if not freq_vals:
-        record.add_warning("No vibrational frequencies found (may be ECD-only file)")
+        record.add_warning(
+            "[ORCA] No vibrational frequencies found (may be ECD-only file)"
+        )
         return
 
     record.frequencies = np.array(freq_vals)
@@ -135,20 +137,21 @@ def extract_frequencies(content: str, record: ConformerRecord, config: ECDConfig
         if config.imag_freq_policy == ImagFreqPolicy.STRICT:
             record.status = ConformerStatus.IMAGINARY_FREQ
             record.add_error(
-                f"Imaginary frequency detected (strict): "
+                f"[ORCA] Imaginary frequency detected (strict): "
                 f"min = {min(imag):.1f} cm⁻¹ ({len(imag)} total)"
             )
         elif config.imag_freq_policy == ImagFreqPolicy.TOLERANT:
             # 仅超过阈值的才标记为失败
             record.status = ConformerStatus.IMAGINARY_FREQ
             record.add_error(
-                f"Imaginary frequency below threshold ({config.imag_freq_threshold} cm⁻¹): "
+                f"[ORCA] Imaginary frequency below threshold "
+                f"({config.imag_freq_threshold} cm⁻¹): "
                 f"min = {min(imag):.1f} cm⁻¹"
             )
         else:
             record.status = ConformerStatus.SOFT_IMAGINARY_FREQ
             record.add_warning(
-                f"Imaginary frequency detected (manual review): "
+                f"[ORCA] Imaginary frequency detected (manual review): "
                 f"min = {min(freq_vals):.1f} cm⁻¹"
             )
 
@@ -157,7 +160,7 @@ def extract_frequencies(content: str, record: ConformerRecord, config: ECDConfig
     if soft_imag and record.status == ConformerStatus.OK:
         record.status = ConformerStatus.SOFT_IMAGINARY_FREQ
         record.add_warning(
-            f"Soft imaginary frequencies (above threshold): "
+            f"[ORCA] Soft imaginary frequencies (above threshold): "
             f"{[f'{v:.1f}' for v in soft_imag]} cm⁻¹"
         )
 
@@ -190,7 +193,7 @@ def extract_cd_data(
             break
 
     if start_idx is None:
-        record.add_error("No CD SPECTRUM block found")
+        record.add_error("[ORCA] No CD SPECTRUM block found")
         if record.status == ConformerStatus.OK or \
            record.status == ConformerStatus.SOFT_IMAGINARY_FREQ:
             record.status = ConformerStatus.NO_CD_DATA
@@ -251,7 +254,7 @@ def extract_cd_data(
             R_values.append(R)
 
     if not energies:
-        record.add_error("CD block found but no valid transitions parsed")
+        record.add_error("[ORCA] CD block found but no valid transitions parsed")
         if record.status in (ConformerStatus.OK, ConformerStatus.SOFT_IMAGINARY_FREQ):
             record.status = ConformerStatus.NO_CD_DATA
         return False
@@ -269,7 +272,7 @@ def parse_opt_file(filepath: str, record: ConformerRecord, config: ECDConfig):
     content = _read_file(filepath)
     if content is None:
         record.status = ConformerStatus.PARSE_FAILED
-        record.add_error(f"Cannot read file: {filepath}")
+        record.add_error(f"[ORCA] Cannot read file: {filepath}")
         return
 
     extract_energies(content, record)
@@ -281,7 +284,7 @@ def parse_ecd_file(filepath: str, record: ConformerRecord, config: ECDConfig):
     content = _read_file(filepath)
     if content is None:
         record.status = ConformerStatus.PARSE_FAILED
-        record.add_error(f"Cannot read file: {filepath}")
+        record.add_error(f"[ORCA] Cannot read file: {filepath}")
         return
 
     # 尝试提取 CD 数据
@@ -291,7 +294,7 @@ def parse_ecd_file(filepath: str, record: ConformerRecord, config: ECDConfig):
     if record.scf_energy is None:
         extract_energies(content, record)
         if record.scf_energy is not None:
-            record.add_warning("Energy extracted from ECD file (not OPT)")
+            record.add_warning("[ORCA] Energy extracted from ECD file (not OPT)")
 
 
 def parse_single_file(filepath: str, record: ConformerRecord, config: ECDConfig):
@@ -301,7 +304,7 @@ def parse_single_file(filepath: str, record: ConformerRecord, config: ECDConfig)
     content = _read_file(filepath)
     if content is None:
         record.status = ConformerStatus.PARSE_FAILED
-        record.add_error(f"Cannot read file: {filepath}")
+        record.add_error(f"[ORCA] Cannot read file: {filepath}")
         return
 
     extract_energies(content, record)

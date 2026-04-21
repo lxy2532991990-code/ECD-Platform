@@ -33,9 +33,14 @@ matplotlib.rcParams["axes.unicode_minus"] = False
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from .config import ECDConfig, WeightingStrategy, ImagFreqPolicy, CDGauge
+from .config import ECDConfig, WeightingStrategy, ImagFreqPolicy, CDGauge, QMProgram
 from .matcher import ConformerMatcher, _glob_orca_outputs
-from .parser import parse_opt_file, parse_ecd_file
+from .parser_dispatch import (
+    parse_opt_file,
+    parse_ecd_file,
+    parse_single_file,
+    same_output_file,
+)
 from .energy import compute_boltzmann_weights, load_manual_weights
 from .spectrum import generate_wavelength_grid, compute_weighted_spectrum
 from .experimental import read_experimental_data, smooth_spectrum
@@ -591,13 +596,20 @@ class LoadWorker(QThread):
             matcher = ConformerMatcher(cfg)
             collection = matcher.match()
 
-            self.status.emit("Parsing ORCA outputs...")
+            self.status.emit("Parsing QM outputs...")
             self.progress.emit(30)
             for rec in collection.all_records:
-                if rec.opt_file and os.path.exists(rec.opt_file):
-                    parse_opt_file(rec.opt_file, rec, cfg)
-                if rec.ecd_file and os.path.exists(rec.ecd_file):
-                    parse_ecd_file(rec.ecd_file, rec, cfg)
+                same_file = (
+                    same_output_file(rec.opt_file, rec.ecd_file)
+                    and os.path.exists(rec.opt_file)
+                )
+                if same_file:
+                    parse_single_file(rec.opt_file, rec, cfg)
+                else:
+                    if rec.opt_file and os.path.exists(rec.opt_file):
+                        parse_opt_file(rec.opt_file, rec, cfg)
+                    if rec.ecd_file and os.path.exists(rec.ecd_file):
+                        parse_ecd_file(rec.ecd_file, rec, cfg)
 
             self.status.emit("Computing weights...")
             self.progress.emit(60)
@@ -1218,7 +1230,7 @@ Warnings: {len(rec.warnings)}
                 self,
                 f"Select {file_type.upper()} File",
                 initial_dir,
-                "ORCA Output (*.out *.log *.orca);;All Files (*)"
+                "QM Output (*.out *.log *.orca);;All Files (*)"
             )
 
             if file_path:
@@ -1424,6 +1436,7 @@ class ECDMainWindow(QMainWindow):
         self.inp_ecd = self._path_row(L, "ECD output directory", True)
         self.inp_exp = self._path_row(L, "Experimental ECD file", False)
         self.inp_wt = self._path_row(L, "Weights file (optional)", False)
+        self.cb_prog = self._combo(L, "QM Program", ["auto", "gaussian", "orca"], 0)
 
         L = self._section_card("SPECTRUM PARAMETERS", "#0EA5E9")
         self.sl_sigma = LabeledSlider("Broadening (eV)", 0.05, 1.0, 0.05, 0.30)
@@ -1762,6 +1775,7 @@ class ECDMainWindow(QMainWindow):
             ecd_dir=self.inp_ecd.text() or "ecd_conf",
             exp_file=self.inp_exp.text() or None,
             weights_file=self.inp_wt.text() or None,
+            program=QMProgram(self.cb_prog.currentText()),
             sigma=self.sl_sigma.value(),
             shift=self.sl_shift.value(),
             scale_factor=self.sl_scale.value(),
