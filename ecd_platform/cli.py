@@ -64,7 +64,23 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _enable_utf8_console():
+    """Ensure stdout/stderr can emit non-ASCII characters (e.g. cm⁻¹, σ, Δ).
+
+    On Windows, the default console encoding is often GBK/cp936, which raises
+    UnicodeEncodeError when argparse prints help text or the pipeline logs
+    progress containing these characters. Reconfiguring the text streams is
+    a no-op on systems that already use UTF-8.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv=None):
+    _enable_utf8_console()
     parser = build_parser()
     args = parser.parse_args(argv)
 
