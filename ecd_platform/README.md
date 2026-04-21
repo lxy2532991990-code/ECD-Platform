@@ -144,14 +144,23 @@ ecd_platform/
 ├── report.py          # 可视化 & 报告生成
 ├── pipeline.py        # 主编排器（7 步工作流）
 ├── cli.py             # 命令行接口
+├── gui.py             # PyQt6 桌面图形界面（构象匹配可视化编辑）
 └── example_usage.py   # 使用示例脚本
 ```
 
 项目根目录额外包含：
 
-- `gui_v1_2.py` — 基于 PyQt6 的桌面图形界面（构象匹配可视化编辑）
+- `run_gui.py` — GUI 启动器（等价于 `python -m ecd_platform.gui`）
 - `run.py` — 脚本式调用示例
 - `build_qt.bat` — PyInstaller 一键打包脚本
+
+### GUI 启动方式
+
+```bash
+python run_gui.py              # 直接运行启动器
+python -m ecd_platform.gui     # 作为模块运行
+ecd-platform-gui               # pip install 后可用的命令
+```
 
 ---
 

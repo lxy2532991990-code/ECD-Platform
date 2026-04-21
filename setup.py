@@ -18,7 +18,9 @@ setup(
         "console_scripts": [
             "ecd-platform=ecd_platform.cli:main",
         ],
-        # GUI 为项目根目录下的脚本 gui_v1_2.py，直接运行: python gui_v1_2.py
+        "gui_scripts": [
+            "ecd-platform-gui=ecd_platform.gui:main",
+        ],
     },
     python_requires=">=3.10,<3.15",
 )

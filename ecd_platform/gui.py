@@ -33,14 +33,14 @@ matplotlib.rcParams["axes.unicode_minus"] = False
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from ecd_platform.config import ECDConfig, WeightingStrategy, ImagFreqPolicy, CDGauge
-from ecd_platform.matcher import ConformerMatcher, _glob_orca_outputs
-from ecd_platform.parser import parse_opt_file, parse_ecd_file
-from ecd_platform.energy import compute_boltzmann_weights, load_manual_weights
-from ecd_platform.spectrum import generate_wavelength_grid, compute_weighted_spectrum
-from ecd_platform.experimental import read_experimental_data, smooth_spectrum
-from ecd_platform.comparison import shift_scan, compare_spectra
-from ecd_platform.report import (
+from .config import ECDConfig, WeightingStrategy, ImagFreqPolicy, CDGauge
+from .matcher import ConformerMatcher, _glob_orca_outputs
+from .parser import parse_opt_file, parse_ecd_file
+from .energy import compute_boltzmann_weights, load_manual_weights
+from .spectrum import generate_wavelength_grid, compute_weighted_spectrum
+from .experimental import read_experimental_data, smooth_spectrum
+from .comparison import shift_scan, compare_spectra
+from .report import (
     plot_shift_scan,
     save_spectrum_csv, generate_full_report,
 )
